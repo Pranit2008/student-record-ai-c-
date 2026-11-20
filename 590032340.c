@@ -41,6 +41,11 @@ int student_count = 0;
 
 /* Function Declarations */
 void loadSampleStudents();
+void addStudent();
+void displayOneStudent(struct Student s);
+void displayAllStudents();
+void searchStudent();
+void deleteStudent();
 
 /* Pre-load 5 diverse student records representing all 4 academic years */
 void loadSampleStudents() {
@@ -109,6 +114,167 @@ void loadSampleStudents() {
     student_count = 5;
 }
 
+/* Function to add a new student record */
+void addStudent() {
+    struct Student s;
+    int i;
+    float sum = 0.0f;
+    int completed_sems = 0;
+
+    if (student_count >= MAX_STUDENTS) {
+        printf("\n[Error] Database limit reached (%d students). Cannot add more.\n", MAX_STUDENTS);
+        return;
+    }
+
+    printf("\n--- Add New Student Record ---\n");
+    printf("Enter SAP ID: ");
+    scanf("%ld", &s.sap_id);
+
+    /* Validate duplicate SAP ID */
+    for (i = 0; i < student_count; i++) {
+        if (students[i].sap_id == s.sap_id) {
+            printf("[Error] A student with SAP ID %ld already exists in the database!\n", s.sap_id);
+            return;
+        }
+    }
+
+    printf("Enter Roll No.: ");
+    scanf(" %19s", s.roll_no);
+
+    printf("Enter Full Name: ");
+    scanf(" %49[^\n]", s.name);
+
+    printf("Enter Phone No.: ");
+    scanf(" %14s", s.phone);
+
+    printf("Enter Email ID: ");
+    scanf(" %49s", s.email);
+
+    printf("Enter Year (1 to 4): ");
+    scanf("%d", &s.year);
+
+    printf("Enter Current Semester (1 to 8): ");
+    scanf("%d", &s.semester);
+
+    printf("Enter SGPA for all 8 semesters (enter 0 for upcoming semesters):\n");
+    for (i = 0; i < TOTAL_SEMESTERS; i++) {
+        printf("  Semester %d SGPA: ", i + 1);
+        scanf("%f", &s.sgpa[i]);
+        if (s.sgpa[i] > 0.0f) {
+            sum += s.sgpa[i];
+            completed_sems++;
+        }
+    }
+
+    s.cgpa = (completed_sems > 0) ? (sum / completed_sems) : 0.0f;
+    students[student_count] = s;
+    student_count++;
+
+    printf("\n[Success] Student '%s' (SAP ID: %ld) added successfully with CGPA: %.2f\n",
+           s.name, s.sap_id, s.cgpa);
+}
+
+/* Helper function to display detailed record of one student */
+void displayOneStudent(struct Student s) {
+    int i;
+    printf("SAP ID    : %ld\n", s.sap_id);
+    printf("Roll No.  : %s\n", s.roll_no);
+    printf("Name      : %s\n", s.name);
+    printf("Phone No. : %s\n", s.phone);
+    printf("Email ID  : %s\n", s.email);
+    printf("Year      : %d\n", s.year);
+    printf("Semester  : %d\n", s.semester);
+    printf("SGPA (1-8): ");
+    for (i = 0; i < TOTAL_SEMESTERS; i++) {
+        if (s.sgpa[i] > 0.0f) {
+            printf("S%d:%.2f ", i + 1, s.sgpa[i]);
+        } else {
+            printf("S%d:NA ", i + 1);
+        }
+    }
+    printf("\nCGPA      : %.2f\n", s.cgpa);
+}
+
+/* Function to display all student records */
+void displayAllStudents() {
+    int i;
+    if (student_count == 0) {
+        printf("\nNo student records found.\n");
+        return;
+    }
+
+    printf("\n================ ALL STUDENT RECORDS (Total: %d) ================\n", student_count);
+    for (i = 0; i < student_count; i++) {
+        printf("\n[Record #%d]\n", i + 1);
+        displayOneStudent(students[i]);
+    }
+    printf("=================================================================\n");
+}
+
+/* Function to search and display a student record by SAP ID */
+void searchStudent() {
+    long int target_sap;
+    int i, found = 0;
+
+    if (student_count == 0) {
+        printf("\nNo student records to search.\n");
+        return;
+    }
+
+    printf("\nEnter SAP ID to search: ");
+    scanf("%ld", &target_sap);
+
+    for (i = 0; i < student_count; i++) {
+        if (students[i].sap_id == target_sap) {
+            printf("\n--- Student Record Found ---\n");
+            displayOneStudent(students[i]);
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("\n[Notice] Student with SAP ID %ld was not found.\n", target_sap);
+    }
+}
+
+/* Function to delete an individual student record by SAP ID */
+void deleteStudent() {
+    long int target_sap;
+    int i, j, found_index = -1;
+
+    if (student_count == 0) {
+        printf("\nNo student records to delete.\n");
+        return;
+    }
+
+    printf("\nEnter SAP ID of the student to delete: ");
+    scanf("%ld", &target_sap);
+
+    for (i = 0; i < student_count; i++) {
+        if (students[i].sap_id == target_sap) {
+            found_index = i;
+            break;
+        }
+    }
+
+    if (found_index == -1) {
+        printf("\n[Error] Student with SAP ID %ld not found. Deletion failed.\n", target_sap);
+        return;
+    }
+
+    printf("\nDeleting record of '%s' (SAP ID: %ld)...\n",
+           students[found_index].name, students[found_index].sap_id);
+
+    /* Shift remaining elements one position to the left */
+    for (j = found_index; j < student_count - 1; j++) {
+        students[j] = students[j + 1];
+    }
+    student_count--;
+
+    printf("[Success] Record deleted. Total students remaining: %d\n", student_count);
+}
+
 int main() {
     int choice;
 
@@ -141,6 +307,18 @@ int main() {
         }
 
         switch (choice) {
+            case 1:
+                addStudent();
+                break;
+            case 2:
+                searchStudent();
+                break;
+            case 5:
+                displayAllStudents();
+                break;
+            case 6:
+                deleteStudent();
+                break;
             case 0:
                 printf("\nExiting program. Thank you!\n");
                 break;
