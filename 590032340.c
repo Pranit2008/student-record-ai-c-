@@ -51,6 +51,8 @@ void averageCGPAByYear();
 void deleteStudent();
 void displaySortedBySapId();
 void displaySortedByName();
+void giveAcademicAdvice(struct Student s);
+void academicAdvisorMenu();
 
 /* Function to calculate CGPA of an individual student by averaging completed (> 0.0) SGPAs */
 void calculateCGPA(struct Student *s) {
@@ -95,7 +97,7 @@ void calculateAllCGPA() {
     }
 }
 
-/* Pre-load 5 diverse student records representing all 4 academic years */
+/* Pre-load 5 diverse student records representing all 4 academic years and performance tiers */
 void loadSampleStudents() {
     int i;
 
@@ -431,6 +433,90 @@ void displaySortedByName() {
     }
 }
 
+/*
+ * Part B: AI-Assisted Academic Advisor
+ * Evaluates CGPA against 4 AI-designed performance tiers and suggests actionable study plans.
+ */
+void giveAcademicAdvice(struct Student s) {
+    int i, lowest_sem = -1;
+    float lowest_sgpa = 10.0f;
+
+    /* Detect completed semester with lowest SGPA for tailored diagnostic */
+    for (i = 0; i < TOTAL_SEMESTERS; i++) {
+        if (s.sgpa[i] > 0.0f && s.sgpa[i] < lowest_sgpa) {
+            lowest_sgpa = s.sgpa[i];
+            lowest_sem = i + 1;
+        }
+    }
+
+    printf("\n------------------------------------------------------------\n");
+    printf("Student : %s (SAP ID: %ld | Year: %d | CGPA: %.2f)\n",
+           s.name, s.sap_id, s.year, s.cgpa);
+
+    if (s.cgpa >= 8.5f) {
+        printf("Category: Excellent Performance\n");
+        printf("Advice  : Excellent performance - maintain your current study pattern\n");
+        printf("          and explore competitive coding, internships, or mini-projects.\n");
+    } else if (s.cgpa >= 7.0f) {
+        printf("Category: Good Performance\n");
+        printf("Advice  : Good performance - stay consistent with lecture notes and\n");
+        printf("          revise core subjects to push your CGPA above 8.5.\n");
+    } else if (s.cgpa >= 5.5f) {
+        printf("Category: Needs Improvement\n");
+        printf("Advice  : Needs improvement - focus more on subjects with lower SGPA\n");
+        printf("          and solve extra practice problems before mid-sem/end-sem exams.\n");
+    } else {
+        printf("Category: Requires Immediate Attention\n");
+        printf("Advice  : Requires immediate attention - meet your faculty advisor,\n");
+        printf("          attend remedial doubt sessions, and clear core fundamentals.\n");
+    }
+
+    if (lowest_sem != -1) {
+        printf("Note    : Lowest recorded SGPA is %.2f in Semester %d.\n",
+               lowest_sgpa, lowest_sem);
+    }
+}
+
+/* Menu wrapper for the AI-Assisted Academic Advisor */
+void academicAdvisorMenu() {
+    int sub_choice, i, found = 0;
+    long int target_sap;
+
+    if (student_count == 0) {
+        printf("\nNo student records available for academic advice.\n");
+        return;
+    }
+
+    printf("\n--- AI-Assisted Academic Advisor ---\n");
+    printf("1. Get Academic Advice for a Specific Student (by SAP ID)\n");
+    printf("2. Generate Academic Advice Report for All Students\n");
+    printf("Enter choice (1 or 2): ");
+    scanf("%d", &sub_choice);
+
+    if (sub_choice == 1) {
+        printf("Enter SAP ID: ");
+        scanf("%ld", &target_sap);
+        for (i = 0; i < student_count; i++) {
+            if (students[i].sap_id == target_sap) {
+                giveAcademicAdvice(students[i]);
+                printf("------------------------------------------------------------\n");
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            printf("\n[Notice] Student with SAP ID %ld was not found.\n", target_sap);
+        }
+    } else if (sub_choice == 2) {
+        for (i = 0; i < student_count; i++) {
+            giveAcademicAdvice(students[i]);
+        }
+        printf("------------------------------------------------------------\n");
+    } else {
+        printf("\nInvalid option selected.\n");
+    }
+}
+
 int main() {
     int choice;
 
@@ -487,12 +573,14 @@ int main() {
             case 8:
                 displaySortedByName();
                 break;
+            case 9:
+                academicAdvisorMenu();
+                break;
             case 0:
                 printf("\nExiting program. Thank you!\n");
                 break;
             default:
-                printf("\nFeature will be implemented in upcoming modules.\n");
-                break;
+                printf("\nInvalid choice! Please select an option from 0 to 9.\n");
         }
     } while (choice != 0);
 
